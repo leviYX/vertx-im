@@ -10,6 +10,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>vertx-base</module>
+        <module>comon</module>
     </modules>
 
     <properties>
