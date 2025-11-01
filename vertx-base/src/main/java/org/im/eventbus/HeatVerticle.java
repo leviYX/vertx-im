@@ -27,9 +27,6 @@ public class HeatVerticle extends AbstractVerticle {
     // 使用uuid来模拟传感器ID
     private final String sensorId = UUID.randomUUID().toString();
 
-    // 温度数据发送事件总线的地址，其他verticle可以订阅该地址来接收温度数据
-    private static final String SENSOR_UPDATE_ADDRESS = "sensor.update";
-
     // 保存当前的温度
     private double temperature = 37.0;
 
@@ -37,21 +34,29 @@ public class HeatVerticle extends AbstractVerticle {
     private static final int HEAT_INTERVAL = 5000;
 
     @Override
-    public void start(Promise<Void> startPromise) throws Exception {
+    public void start(Promise<Void> startPromise) {
         LOG.info("HeatVerticle started on thread: {}", Thread.currentThread().getName());
         updateTemperature();
         startPromise.complete();
+    }
+
+    @Override
+    public void stop(Promise<Void> stopPromise) throws Exception {
+        LOG.info("HeatVerticle stopped on thread: {}", Thread.currentThread().getName());
+        // close  todo
+        stopPromise.complete();
     }
 
     private void updateTemperature() {
         // 构建温度模拟数据
         JsonObject payload = new JsonObject().put("sensorId", sensorId).put("temperature", temperature);
         // 温度数据发送到事件总线总，让其他Verticle可以订阅并处理,
-        vertx.eventBus().publish(SENSOR_UPDATE_ADDRESS,payload);
+        vertx.eventBus().publish(Topic.SENSOR_UPDATE_ADDRESS,payload);
         // 模拟温度传感器在每5-6秒内发布一次温度数据
         vertx.setTimer(HEAT_INTERVAL + random.nextInt(1000),id -> {
             // 模拟温度变化，这里可能出现负数，导致温度下降，注意即可
             temperature += random.nextDouble();
+            LOG.info("HeatVerticle update temperature: {}", temperature);
             // 定时器中递归调用，继续模拟温度变化，定时发布数据上去
             updateTemperature();
         });
