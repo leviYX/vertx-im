@@ -11,6 +11,7 @@
     <modules>
         <module>vertx-base</module>
         <module>comon</module>
+        <module>im-server</module>
     </modules>
 
     <properties>
