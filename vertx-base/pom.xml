@@ -11,6 +11,7 @@
 
     <artifactId>vertx-base</artifactId>
 
+    <description>vertx的基础知识模块</description>
     <dependencies>
         <dependency>
             <groupId>io.vertx</groupId>
