@@ -35,7 +35,7 @@ public class HeatVerticle extends AbstractVerticle {
     private static final int HEAT_INTERVAL = 5000;
 
     @Override
-    public void start(Promise<Void> startPromise) {
+    public void start(Promise<Void> startPromise) throws Exception {
         LOG.info("HeatVerticle started on thread: {}", Thread.currentThread().getName());
         updateTemperature();
         startPromise.complete();
