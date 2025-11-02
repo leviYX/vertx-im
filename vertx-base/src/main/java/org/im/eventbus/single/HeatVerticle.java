@@ -1,8 +1,9 @@
-package org.im.eventbus;
+package org.im.eventbus.single;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
+import org.im.eventbus.Topic;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

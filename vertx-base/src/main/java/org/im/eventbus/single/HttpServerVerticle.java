@@ -1,4 +1,4 @@
-package org.im.eventbus;
+package org.im.eventbus.single;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
@@ -7,6 +7,7 @@ import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
+import org.im.eventbus.Topic;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +44,6 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     }
 
-    // todo
     private void doSse(HttpServerRequest request) {
         HttpServerResponse response = request.response();
         response.putHeader("content-type", "text/event-stream")

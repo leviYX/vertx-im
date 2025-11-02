@@ -1,4 +1,4 @@
-package org.im.eventbus;
+package org.im.eventbus.single;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.DeploymentOptions;
