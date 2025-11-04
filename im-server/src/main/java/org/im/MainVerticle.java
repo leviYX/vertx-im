@@ -38,7 +38,7 @@ public class MainVerticle extends AbstractVerticle {
         load.onSuccess(config -> {
             LOG.info("yaml config is : {}", config);
             // 创建redis连接池
-            // REDIS = createRedisPool(config);
+            REDIS = createRedisPool(config);
 
             Integer port = config.getInteger("server.port", DEFAULT_SERVER_PORT);
             // 启动主流程服务
@@ -58,6 +58,7 @@ public class MainVerticle extends AbstractVerticle {
         HttpServer httpServer = vertx.createHttpServer();
         // 创建路由,springMvc 中的 dispatcherServlet 负责路由分发
         Router router = Router.router(vertx);
+
 
         // 注册登陆路由
         LoginApi.attach(router,sessionManager);
