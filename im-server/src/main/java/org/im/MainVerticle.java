@@ -10,6 +10,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.redis.client.Redis;
 import io.vertx.redis.client.RedisOptions;
 import org.im.api.LoginApi;
+import org.im.api.RegisterApi;
 import org.im.config.ConfigLoader;
 import org.im.handler.WebsocketHandler;
 import org.im.manager.SessionManager;
@@ -59,12 +60,14 @@ public class MainVerticle extends AbstractVerticle {
         // 创建路由,springMvc 中的 dispatcherServlet 负责路由分发
         Router router = Router.router(vertx);
 
+        // 绑定注册路由
+        RegisterApi.attach(router,REDIS);
 
-        // 注册登陆路由
-        LoginApi.attach(router,sessionManager);
+        // 绑定登陆路由
+        LoginApi.attach(router,sessionManager,REDIS);
 
         httpServer.requestHandler(router)
-                .webSocketHandler(new WebsocketHandler())
+                .webSocketHandler(new WebsocketHandler(REDIS))
                 .listen(port, res -> {
                     if (res.succeeded()) {
                         LOG.info("http server started on port {}", port);
