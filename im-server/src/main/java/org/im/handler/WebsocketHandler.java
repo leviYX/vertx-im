@@ -6,11 +6,14 @@ import io.vertx.core.http.ServerWebSocket;
 import io.vertx.redis.client.Command;
 import io.vertx.redis.client.Redis;
 import io.vertx.redis.client.Request;
+import io.vertx.redis.client.Response;
 import org.im.chat.ChatInfo;
 import org.im.constant.RedisConstant;
 import org.im.manager.SessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class WebsocketHandler implements Handler<ServerWebSocket> {
 
@@ -61,11 +64,17 @@ public class WebsocketHandler implements Handler<ServerWebSocket> {
                     // 加好友
                     redis.send(Request.cmd(Command.SMEMBERS).arg(RedisConstant.USER_FRIENDS_SET + to))
                             .onSuccess(res -> {
-                                if(res.get(from) != null) {
-                                    ws.writeFinalTextFrame("你已经是好友了").onSuccess(success -> {
-                                        redis.send(Request.cmd(Command.SET).arg(RedisConstant.USER_FRIENDS_SET + from).arg(to));
-                                    });
-                                }else {
+                                AtomicBoolean flag = new AtomicBoolean(false);
+                                for (Response re : res) {
+                                    String friend = re.toString();
+                                    if (from.equals(friend)) {
+                                        ws.writeFinalTextFrame("你已经是好友了").onSuccess(success -> {
+                                            flag.set(true);
+                                            redis.send(Request.cmd(Command.SADD).arg(RedisConstant.USER_FRIENDS_SET + from).arg(to));
+                                        });
+                                    }
+                                }
+                                if (!flag.get()) {
                                     String msg = String.format("你好%s,我是%s,我们现在已经是好友了。",to,from);
                                     ServerWebSocket serverWebSocketJoin = SessionManager.connectionClients.get(to);
                                     if(serverWebSocketJoin != null) {
