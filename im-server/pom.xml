@@ -43,6 +43,15 @@
             <artifactId>vertx-redis-client</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>co.elastic.clients</groupId>
+            <artifactId>elasticsearch-java</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.json</groupId>
+            <artifactId>jakarta.json-api</artifactId>
+        </dependency>
+
         <!--common-->
         <dependency>
             <groupId>org.im</groupId>
