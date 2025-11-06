@@ -1,18 +1,29 @@
 package org.im.handler;
 
+import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
+import co.elastic.clients.elasticsearch.core.BulkRequest;
+import co.elastic.clients.elasticsearch.core.BulkResponse;
 import com.alibaba.fastjson2.JSON;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
 import io.vertx.core.http.ServerWebSocket;
 import io.vertx.redis.client.Command;
 import io.vertx.redis.client.Redis;
 import io.vertx.redis.client.Request;
 import io.vertx.redis.client.Response;
 import org.im.chat.ChatInfo;
+import org.im.chat.ChatRecord;
+import org.im.config.EsPool;
 import org.im.constant.RedisConstant;
 import org.im.manager.SessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class WebsocketHandler implements Handler<ServerWebSocket> {
@@ -20,9 +31,11 @@ public class WebsocketHandler implements Handler<ServerWebSocket> {
     private final static Logger LOG = LoggerFactory.getLogger(WebsocketHandler.class);
 
     private Redis redis;
+    private ElasticsearchAsyncClient esClient;
 
     public WebsocketHandler(Redis redis) {
         this.redis = redis;
+        this.esClient = EsPool.getEsAsyncClient();
     }
 
     @Override
@@ -92,10 +105,34 @@ public class WebsocketHandler implements Handler<ServerWebSocket> {
                     // 普通聊天
                     ServerWebSocket serverWebSocket = SessionManager.connectionClients.get(to);
                     serverWebSocket.writeFinalTextFrame(message);
+                    String chatTime = LocalDateTime.now().toString();
+                    String chatId = UUID.randomUUID().toString().replaceAll("-", "");
+                    ChatRecord chatRecord = new ChatRecord(chatId, from, to, data, chatTime, chatTime, 1, 0);
+                    BulkRequest.Builder bulkBuilder = new BulkRequest.Builder();
+                    bulkBuilder.operations(builder ->{
+                        return builder.create(c ->{
+                            return c.index("chat_record").document(chatRecord).id(chatRecord.chatId());
+                        });
+                    });
+                    BulkRequest bulkRequest = bulkBuilder.build();
+                    CompletableFuture<BulkResponse> future = esClient.bulk(bulkRequest);
+                    toFuture(future)
+                            .onSuccess(
+                            res -> ws.writeFinalTextFrame("聊天记录已保存"))
+                            .onFailure(
+                            err -> {
+                                err.printStackTrace();
+                                ws.writeFinalTextFrame("聊天记录保存失败");
+                            }
+                    );
                     break;
                 default:
                     break;
             }
         });
+    }
+
+    static <T>Future<T> toFuture(CompletionStage<T> cs) {
+        return Future.fromCompletionStage(cs, Vertx.currentContext());
     }
 }
