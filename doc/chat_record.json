@@ -1,0 +1,43 @@
+PUT chat_record
+{
+  "aliases": {
+    "chat_record_index": {
+      "is_write_index": true
+    }
+  },
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0
+  },
+  "mappings": {
+    "properties": {
+      "chat_id":{
+        "type": "keyword",
+        "doc_values": false
+      },
+      "from":{
+        "type": "keyword"
+      },
+      "to":{
+        "type": "keyword"
+      },
+      "chat_content":{
+        "type": "text"
+      },
+      "chat_time":{
+        "type": "date",
+        "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
+      },
+      "create_time":{
+        "type": "date",
+        "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
+      },
+      "status":{
+        "type": "keyword"
+      },
+      "delete_status":{
+        "type": "keyword"
+      }
+    }
+  }
+}
