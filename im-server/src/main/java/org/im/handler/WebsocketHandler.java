@@ -17,6 +17,7 @@ import org.im.chat.ChatRecord;
 import org.im.config.EsPool;
 import org.im.constant.RedisConstant;
 import org.im.manager.SessionManager;
+import org.im.utils.FutureUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,7 +117,7 @@ public class WebsocketHandler implements Handler<ServerWebSocket> {
                     });
                     BulkRequest bulkRequest = bulkBuilder.build();
                     CompletableFuture<BulkResponse> future = esClient.bulk(bulkRequest);
-                    toFuture(future)
+                    FutureUtils.toFuture(future)
                             .onSuccess(
                             res -> ws.writeFinalTextFrame("聊天记录已保存"))
                             .onFailure(
@@ -132,7 +133,4 @@ public class WebsocketHandler implements Handler<ServerWebSocket> {
         });
     }
 
-    static <T>Future<T> toFuture(CompletionStage<T> cs) {
-        return Future.fromCompletionStage(cs, Vertx.currentContext());
-    }
 }

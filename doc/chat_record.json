@@ -1,4 +1,3 @@
-PUT chat_record
 {
   "aliases": {
     "chat_record_index": {
@@ -22,7 +21,8 @@ PUT chat_record
         "type": "keyword"
       },
       "chat_content":{
-        "type": "text"
+        "type": "text",
+        "analyzer": "ik_smart" // 中文分词器
       },
       "chat_time":{
         "type": "date",

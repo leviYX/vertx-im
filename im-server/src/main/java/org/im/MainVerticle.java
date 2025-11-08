@@ -9,6 +9,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.redis.client.Redis;
 import io.vertx.redis.client.RedisOptions;
+import org.im.api.ChatRecordApi;
 import org.im.api.LoginApi;
 import org.im.api.RegisterApi;
 import org.im.config.ConfigLoader;
@@ -65,6 +66,9 @@ public class MainVerticle extends AbstractVerticle {
 
         // 绑定登陆路由
         LoginApi.attach(router,sessionManager,REDIS);
+
+        // 绑定聊天记录检查路由
+        ChatRecordApi.attach(router,sessionManager,REDIS);
 
         httpServer.requestHandler(router)
                 .webSocketHandler(new WebsocketHandler(REDIS))
