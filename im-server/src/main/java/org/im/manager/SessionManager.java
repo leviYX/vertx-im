@@ -27,6 +27,28 @@ public class SessionManager {
         return token;
     }
 
+    /**
+     * 根据token获取用户名
+     *
+     * @param token
+     * @return
+     */
+    public static String getUsernameByToken(String token) {
+        return loginUser.get(token);
+    }
+
+    /**
+     * 校验user是否登陆
+     *
+     * @param token 请求携带的token，该值为登录时获取，后续接入jwt todo
+     * @param username 校验的用户名
+     * @return
+     */
+    public boolean isLogin(String token,String username) {
+        String user = loginUser.get(token);
+        return user != null && user.equals(username);
+    }
+
     private String generateToken(String username) {
         return username + "_" + System.currentTimeMillis();
     }
