@@ -13,9 +13,14 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.redis.client.Command;
 import io.vertx.redis.client.Redis;
+import io.vertx.redis.client.Request;
+import io.vertx.redis.client.Response;
 import org.im.config.EsPool;
+import org.im.constant.RedisConstant;
 import org.im.manager.SessionManager;
+import org.im.manager.UserManager;
 import org.im.utils.CustomStringUtils;
 import org.im.utils.FutureUtils;
 import org.slf4j.Logger;
@@ -24,7 +29,11 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * 聊天记录api
+ */
 public class ChatRecordApi {
 
     private final static Logger LOG = LoggerFactory.getLogger(ChatRecordApi.class);
@@ -46,14 +55,53 @@ public class ChatRecordApi {
                     String to = bodyAsJson.getString("to");
                     String startChatTime = bodyAsJson.getString("startChatTime");
                     String endChatTime = bodyAsJson.getString("endChatTime");
-                    String search = bodyAsJson.getString("c");
+                    String search = bodyAsJson.getString("search");
 
-                    // todo
+                    // 从header中获取token,所有的未加入白名单的请求都需要token // todo 白名单
+                    String token = context.request().getHeader("token");
+                    LOG.info("请求头中token: {}", token);
+                    if (token == null) {
+                        context.response().setStatusCode(500).end("请求头中未包含token");
+                        return;
+                    }
+
                     // 当前用户是否注册用户
+                    boolean register = UserManager.isRegister(redis, from);
+                    if (!register) {
+                        context.response().setStatusCode(500).end("用户 " + from + " 未注册");
+                        return;
+                    }
                     // 当前用户是否登陆
+                    boolean login = sessionManager.isLogin(token, from);
+                    if (!login) {
+                        context.response().setStatusCode(500).end("用户 " + from + " 未登陆");
+                        return;
+                    }
                     // 当前用户搜的from是不是自己
-                    // 当前用户搜的to是不是自己的好友
+                    if(CustomStringUtils.isNotEmpty(from) && !from.equals(SessionManager.getUsernameByToken(token))) {
+                        context.response().setStatusCode(500).end("用户 " + from + " 不是当前登陆用户,无法查询其他用户的聊天记录");
+                        return;
+                    }
 
+                    // 当前用户搜的to是不是from的好友
+                    redis.send(Request.cmd(Command.SMEMBERS).arg(RedisConstant.USER_FRIENDS_SET + from))
+                            .onSuccess(res -> {
+                                AtomicBoolean flag = new AtomicBoolean(false);
+                                for (Response re : res) {
+                                    String friend = re.toString();
+                                    if (to.equals(friend)) {
+                                        flag.set(true);
+                                        break;
+                                    }
+                                }
+                                if (!flag.get()) {
+                                   context.response().setStatusCode(500).end("用户 " + to + " 不是您的好友用户,无法查询聊天记录");
+                                }
+                            })
+                            .onFailure(err -> context.response().setStatusCode(500).end("查询用户 " + from + " 好友列表失败" + err.getMessage()));
+
+
+                    // 构建es检索
                     BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
                     if (CustomStringUtils.isNotEmpty(from)) {
                         boolQueryBuilder.filter(f -> f.term(t -> t.field("from").value(from)));
