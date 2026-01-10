@@ -44,7 +44,7 @@ public class ChatRecordApi {
 
 
     public static void attach(Router parent, SessionManager sessionManager, Redis redis) {
-        // 初始化esClient
+        // 初始化esClient,全局单例，后续改成guice注入
         esClient = EsPool.getEsAsyncClient();
 
         parent.post(RECORD_SEARCH_API)
